@@ -1,0 +1,46 @@
+.bg-color1{
+    background-color: #383A4C;
+   }
+   .bg-color2{
+       background-color: #1F1F2D;
+   }
+   
+   .bg-color4{
+       background-color: #8E51DE;
+   }
+   body{
+       color: white;
+   }
+   
+   .start{
+           text-decoration: none;
+           font-weight: bold;
+           font-size: 20px; /* Tamaño de fuente */
+           color: white; /* Color del texto */
+           background-color: #8E51DE; /* Color de fondo */
+           padding: 10px 30px; /* Agregar espacio de relleno para aumentar el tamaño */
+           border-radius: 5px; /* Añadir bordes redondeados para darle estilo */
+           display: inline-block; /* Convertir el enlace en un bloque para ajustar el ancho */
+       
+   }
+   
+   .input-code{
+       border:solid 1px white;
+       border-radius: 10px;
+       width: 100%;
+       height: 100%;
+       background-color: #282838;
+       color: white;
+   }
+   .sub-title{
+       color: white;
+   }
+   
+   .sub-input{
+       border:solid 1px white;
+       border-radius: 10px;
+       width: 100%;
+       min-height: 200px;
+       background-color: #282838;
+       overflow-y: auto;
+   }

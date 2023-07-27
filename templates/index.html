@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='inicio.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+    <title>MikroTik Connection</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <div class="login-box">
+        <h2>MikroTik Router Connection</h2>
+        <form id="connection-form">
+            <div class="user-box">
+                <input type="text" id="username" name="username" required>
+                <label for="username">Username</label>
+            </div>
+            <div class="user-box">
+                <input type="password" id="password" name="password" required>
+                <label for="password">Password</label>
+            </div>
+            <div class="user-box">
+                <input type="text" id="mac_address" name="mac_address" required>
+                <label for="mac_address">MAC Address</label>
+            </div>
+            <a href="#" onclick="connectToMikroTik(); return false;">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                Connect
+            </a>
+        </form>
+        <div id="response" class="alert"></div>
+    </div>
+    <script>
+        function connectToMikroTik() {
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+            const mac_address = document.getElementById("mac_address").value;
+
+            $.ajax({
+                type: "POST",
+                url: "/connect",
+                contentType: "application/json",
+                data: JSON.stringify({ "username": username, "password": password, "mac_address": mac_address }),
+                success: function (response) {
+                    if (response.message === "success") {
+                        window.location.href = "/main.html";
+                    } else {
+                        document.getElementById("response").innerText = response.message;
+                    }
+                },
+                error: function (error) {
+                    document.getElementById("response").innerText = error.responseJSON.message;
+                }
+            });
+        }
+    </script>
+</body>
+</html>
