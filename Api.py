@@ -151,6 +151,8 @@ app.config['SECRET_KEY'] = 'super secret key'
 app.config['SESSION_TYPE'] = 'filesystem'
 Session(app)
 
+
+
 def connect_to_mikrotik(ip, username, password):
     try:
         ssh_client = paramiko.SSHClient()
@@ -188,12 +190,25 @@ def send_command():
     if not command:
         return jsonify({"message": "Se requiere un comando."}), 400
 
+    # Obtener el valor actual de base_path desde la sesión
+    base_path = session.get('base_path', "/ruta-principal-del-inicio")
+
+    # Construir la ruta completa del comando usando base_path
+    full_command = f"{base_path}/{command}"
+
     ssh_client = connect_to_mikrotik(session['ip'], session['username'], session['password'])
     if ssh_client:
-        stdin, stdout, stderr = ssh_client.exec_command(command)
+        stdin, stdout, stderr = ssh_client.exec_command(full_command)
         output_lines = stdout.readlines()
         output = '\n'.join([line.strip() for line in output_lines])
         ssh_client.close()
+
+        # Actualizar base_path solo después de ejecutar el primer comando
+        if not base_path.endswith(command):
+            base_path = f"{base_path}/{command}"
+            # Almacenar el nuevo valor de base_path en la sesión para mantenerlo entre solicitudes
+            session['base_path'] = base_path
+
         return jsonify({"message": "command executed", "output": output})
     else:
         return jsonify({"message": "command failed"}), 500
