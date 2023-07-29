@@ -1,28 +1,28 @@
 from flask import Flask, request, jsonify, session
 from flask_session import Session
 from flask_cors import CORS
-from flask_redis import FlaskRedis
-from collections import Counter
-from librouteros import connect
+import paramiko
+import os
 import ply.lex as lex
 import ply.yacc as yacc
+from collections import Counter
+from librouteros import connect
+from flask_redis import FlaskRedis
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
 
 app.config['SECRET_KEY'] = 'super secret key'
 app.config['SESSION_TYPE'] = 'filesystem'
-app.config['REDIS_URL'] = 'redis://localhost:6379/0'  # Configura la URL de Redis
 Session(app)
 
-# Configurar FlaskRedis
-redis_store = FlaskRedis(app)
 
 reserved = {
     'int': 'INT',
     'main': 'MAIN',
     'do': 'DO',
     'while': 'WHILE',
+
 }
 # Tokens
 tokens = (
