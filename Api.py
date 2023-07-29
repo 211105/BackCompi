@@ -1,26 +1,28 @@
 from flask import Flask, request, jsonify, session
 from flask_session import Session
 from flask_cors import CORS
-import paramiko
-import os
+from flask_redis import FlaskRedis
+from collections import Counter
+from librouteros import connect
 import ply.lex as lex
 import ply.yacc as yacc
-from collections import Counter
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)
 
 app.config['SECRET_KEY'] = 'super secret key'
 app.config['SESSION_TYPE'] = 'filesystem'
+app.config['REDIS_URL'] = 'redis://localhost:6379/0'  # Configura la URL de Redis
 Session(app)
 
+# Configurar FlaskRedis
+redis_store = FlaskRedis(app)
 
 reserved = {
     'int': 'INT',
     'main': 'MAIN',
     'do': 'DO',
     'while': 'WHILE',
-
 }
 # Tokens
 tokens = (
@@ -151,14 +153,16 @@ app.config['SECRET_KEY'] = 'super secret key'
 app.config['SESSION_TYPE'] = 'filesystem'
 Session(app)
 
+    
+    
 def connect_to_mikrotik(ip, username, password):
     try:
-        ssh_client = paramiko.SSHClient()
-        ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh_client.connect(ip, username=username, password=password, timeout=10)
-        return ssh_client
+        connection = connect(username=username, password=password, host=ip, port=8728)
+        return connection
     except Exception as e:
         return None
+
+
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -170,33 +174,51 @@ def login():
     if not username or not password or not ip_address:
         return jsonify({"message": "Se requiere el username, password y IP address."}), 400
 
-    ssh_client = connect_to_mikrotik(ip_address, username, password)
-    if ssh_client:
-        session['ip'] = ip_address
-        session['username'] = username
-        session['password'] = password
-        return jsonify({"message": "login successful"})
-    else:
-        return jsonify({"message": "login failed"}), 401
+    session['connection_info'] = {
+        'username': username,
+        'password': password,
+        'ip': ip_address
+    }
+
+    return jsonify({"message": "login successful"})
+
+
+    
+
+
+import traceback
 
 @app.route('/command', methods=['POST'])
 def send_command():
-    if 'ip' not in session or 'username' not in session or 'password' not in session:
+    if 'connection_info' not in session:
         return jsonify({"message": "No se ha iniciado sesión"}), 401
 
     command = request.get_json().get('command')
     if not command:
         return jsonify({"message": "Se requiere un comando."}), 400
 
-    ssh_client = connect_to_mikrotik(session['ip'], session['username'], session['password'])
-    if ssh_client:
-        stdin, stdout, stderr = ssh_client.exec_command(command)
-        output_lines = stdout.readlines()
-        output = '\n'.join([line.strip() for line in output_lines])
-        ssh_client.close()
-        return jsonify({"message": "command executed", "output": output})
-    else:
-        return jsonify({"message": "command failed"}), 500
+    connection_info = session['connection_info']
+    connection = connect(username=connection_info['username'], 
+                         password=connection_info['password'],
+                         host=connection_info['ip'], 
+                         port=8728)
+    
+    response_generator = connection(cmd=command)
+
+    try:
+        response_list = []
+        for item in response_generator:
+            response_list.append(item)
+    except Exception as e:
+        print("Error while reading response:", str(e))  # Imprime la excepción en la consola del servidor
+        return jsonify({"message": "Error al leer la respuesta del dispositivo", "error": str(e)}), 500
+
+
+
+
+
+
+
 
 @app.route('/parse_code', methods=['POST'])
 def parse_code():
